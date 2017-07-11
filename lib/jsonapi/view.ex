@@ -117,11 +117,11 @@ defmodule JSONAPI.View do
       end
 
       def url_for(data, %Plug.Conn{}=conn) when is_list(data) do
-        "#{Atom.to_string(conn.scheme)}://#{conn.host}#{@namespace}/#{type()}"
+        "#{scheme(conn)}://#{host(conn)}#{@namespace}/#{type()}"
       end
 
       def url_for(data, %Plug.Conn{}=conn) do
-        "#{Atom.to_string(conn.scheme)}://#{conn.host}#{@namespace}/#{type()}/#{id(data)}"
+        "#{scheme(conn)}://#{host(conn)}#{@namespace}/#{type()}/#{id(data)}"
       end
 
       def url_for_rel(data, rel_type, conn) do
@@ -139,6 +139,10 @@ defmodule JSONAPI.View do
         def render("index.json", %{data: data, conn: conn, params: params}),
           do: show(data, conn, params)
       end
+
+      defp host(conn), do: Application.get_env(:jsonapi, :host) || conn.host
+
+      defp scheme(conn), do: Application.get_env(:jsonapi, :scheme) || to_string(conn.scheme)
 
       defp underscore?, do: Application.get_env(:jsonapi, :underscore_to_dash, false)
 
