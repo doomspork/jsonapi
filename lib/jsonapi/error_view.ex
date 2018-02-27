@@ -21,31 +21,31 @@ defmodule JSONAPI.ErrorView do
   def malformed_id do
     "Malformed id in data parameter"
     |> build_error(422, @crud_message, "/data/id")
-    |> serialize_error
+    |> serialize_error()
   end
 
   def mismatched_id do
     "Mismatched id parameter"
     |> build_error(409, "The id in the url must match the id at '/data/id'.  #{@crud_message}", "/data/id")
-    |> serialize_error
+    |> serialize_error()
   end
 
   def missing_data_attributes_param do
     "Missing attributes in data parameter"
     |> build_error(400, @crud_message,  "/data/attributes")
-    |> serialize_error
+    |> serialize_error()
   end
 
   def missing_data_param do
     "Missing data parameter"
     |> build_error(400, @crud_message, "/data")
-    |> serialize_error
+    |> serialize_error()
   end
 
   def missing_id do
     "Missing id in data parameter"
     |> build_error(400, @crud_message, "/data/id")
-    |> serialize_error
+    |> serialize_error()
   end
 
   def send_error(conn, %{errors: [%{status: status}]} = error), do: send_error(conn, status, error)
@@ -63,7 +63,7 @@ defmodule JSONAPI.ErrorView do
   def send_error(conn, status, error) do
     conn
     |> send_resp(status, error)
-    |> halt
+    |> halt()
   end
 
   def serialize_error(error) do
