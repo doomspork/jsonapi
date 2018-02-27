@@ -22,6 +22,7 @@ defmodule JSONAPI.ContentTypeNegotiation do
   def init(opts), do: opts
 
   def call(%{method: method} = conn, _opts) when method in ["DELETE", "GET", "HEAD"], do: conn
+
   def call(conn, _opts) do
     conn
     |> content_type
@@ -33,9 +34,9 @@ defmodule JSONAPI.ContentTypeNegotiation do
     accepts =
       conn
       |> get_req_header("accept")
-      |> Enum.flat_map(&(String.split(&1, ",")))
+      |> Enum.flat_map(&String.split(&1, ","))
       |> Enum.map(&String.trim/1)
-      |> List.first
+      |> List.first()
 
     {conn, content_type, accepts}
   end
@@ -44,16 +45,19 @@ defmodule JSONAPI.ContentTypeNegotiation do
     content_type =
       conn
       |> get_req_header("content-type")
-      |> List.first
+      |> List.first()
 
     {conn, content_type}
   end
 
   defp respond({conn, @jsonapi, @jsonapi}) do
-    register_before_send(conn, fn conn -> update_resp_header(conn, "content-type", @jsonapi, &(&1)) end)
+    register_before_send(conn, fn conn ->
+      update_resp_header(conn, "content-type", @jsonapi, & &1)
+    end)
 
     conn
   end
+
   defp respond({conn, @jsonapi, _accepts}), do: send_error(conn, 406)
   defp respond({conn, _content_type, _accepts}), do: send_error(conn, 415)
 end

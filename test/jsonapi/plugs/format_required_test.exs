@@ -29,7 +29,10 @@ defmodule JSONAPI.FormatRequiredTest do
 
     %{"errors" => [error]} = Poison.decode!(conn.resp_body)
 
-    assert %{"source" => %{"pointer" => "/data/attributes"}, "title" => "Missing attributes in data parameter"} = error
+    assert %{
+             "source" => %{"pointer" => "/data/attributes"},
+             "title" => "Missing attributes in data parameter"
+           } = error
   end
 
   test "passes request through" do

@@ -14,10 +14,11 @@ defmodule JSONAPI.Serializer do
   and includes you may also want to reference the `JSONAPI.QueryParser`.
   """
   def serialize(view, data, conn \\ nil) do
-    query_includes = case conn do
-      %Plug.Conn{assigns: %{jsonapi_query: %{includes: includes}}} -> includes
-      _ -> []
-    end
+    query_includes =
+      case conn do
+        %Plug.Conn{assigns: %{jsonapi_query: %{includes: includes}}} -> includes
+        _ -> []
+      end
 
     {to_include, encoded_data} = encode_data(view, data, conn, query_includes)
 
@@ -25,6 +26,7 @@ defmodule JSONAPI.Serializer do
       data: encoded_data,
       included: flatten_included(to_include)
     }
+
     merge_links(encoded_data, data, view, conn, remove_links?())
   end
 
@@ -61,7 +63,12 @@ defmodule JSONAPI.Serializer do
     Enum.map_reduce(rels, doc, &build_relationships(conn, view_info, &1, &2))
   end
 
-  def build_relationships(conn, {view, data, query_includes, valid_includes}, {key, include_view}, acc) do
+  def build_relationships(
+        conn,
+        {view, data, query_includes, valid_includes},
+        {key, include_view},
+        acc
+      ) do
     rel_view =
       case include_view do
         {view, :include} -> view
@@ -74,7 +81,12 @@ defmodule JSONAPI.Serializer do
     # Build the relationship url
     rel_url = view.url_for_rel(data, key, conn)
     # Build the relationship
-    acc = put_in(acc, [:relationships, underscore(key)], encode_relation({only_rel_view, rel_data, rel_url, conn}))
+    acc =
+      put_in(
+        acc,
+        [:relationships, underscore(key)],
+        encode_relation({only_rel_view, rel_data, rel_url, conn})
+      )
 
     valid_include_view = include_view(valid_includes, key)
 
@@ -85,7 +97,8 @@ defmodule JSONAPI.Serializer do
         else
           []
         end
-      #TODO Possibly only return a list of data + view, and encode it after the fact once instead of N times.
+
+      # TODO Possibly only return a list of data + view, and encode it after the fact once instead of N times.
       {rel_included, encoded_rel} = encode_data(rel_view, rel_data, conn, rel_query_includes)
       {rel_included ++ [encoded_rel], acc}
     else
@@ -99,6 +112,7 @@ defmodule JSONAPI.Serializer do
       _view -> false
     end
   end
+
   defp include_view({view, :include}, _key), do: {view, :include}
   defp include_view(_view, _key), do: false
 
@@ -110,23 +124,32 @@ defmodule JSONAPI.Serializer do
     data = %{
       data: encode_rel_data(rel_view, rel_data)
     }
+
     merge_related_links(data, info, remove_links?())
   end
 
   defp merge_links(doc, data, view, conn, false) do
     Map.merge(doc, %{links: %{self: view.url_for(data, conn)}})
   end
+
   defp merge_links(doc, _data, _view, _conn, _remove_links), do: doc
 
-  defp merge_related_links(encoded_data, {rel_view, rel_data, rel_url, conn}, false = _remove_links) do
+  defp merge_related_links(
+         encoded_data,
+         {rel_view, rel_data, rel_url, conn},
+         false = _remove_links
+       ) do
     Map.merge(encoded_data, %{links: %{self: rel_url, related: rel_view.url_for(rel_data, conn)}})
   end
+
   defp merge_related_links(encoded_rel_data, _info, _remove_links), do: encoded_rel_data
 
   def encode_rel_data(_view, nil), do: nil
+
   def encode_rel_data(view, data) when is_list(data) do
-    Enum.map data, &(encode_rel_data(view, &1))
+    Enum.map(data, &encode_rel_data(view, &1))
   end
+
   def encode_rel_data(view, data) do
     %{
       type: view.type(),
@@ -137,18 +160,20 @@ defmodule JSONAPI.Serializer do
   # Flatten and unique all the included objects
   def flatten_included(included) do
     included
-    |> List.flatten
+    |> List.flatten()
     |> Enum.reject(&is_nil/1)
-    |> Enum.uniq
+    |> Enum.uniq()
   end
 
   # This makes a mapping between includes from the query parser and includes in the view.
   defp get_includes(view, nil), do: view.relationships()
   defp get_includes(view, []), do: view.relationships()
+
   defp get_includes(view, query_includes) when is_list(query_includes) do
     base = view.relationships()
-    Enum.reduce(query_includes, [], &(handle_include(base, &1, &2)))
+    Enum.reduce(query_includes, [], &handle_include(base, &1, &2))
   end
+
   defp get_includes(view, include) do
     base = view.relationships()
     Keyword.get(base, include)
@@ -159,9 +184,11 @@ defmodule JSONAPI.Serializer do
     acc = Keyword.put(acc, parent, view)
     handle_include(view, child, acc)
   end
+
   defp handle_include({base, :include}, child, acc) do
     handle_include(base.relationships(), child, acc)
   end
+
   defp handle_include(base, child, acc) do
     view = if is_list(base), do: Keyword.get(base, child), else: base
     Keyword.put(acc, child, view)

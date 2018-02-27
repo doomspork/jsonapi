@@ -7,9 +7,9 @@ defmodule JSONAPITest do
 
     def fields, do: [:text, :body]
     def type, do: "mytype"
+
     def relationships do
-      [author: {JSONAPITest.UserView, :include},
-       other_user: {JSONAPITest.UserView, :include}]
+      [author: {JSONAPITest.UserView, :include}, other_user: {JSONAPITest.UserView, :include}]
     end
   end
 
@@ -35,7 +35,7 @@ defmodule JSONAPITest do
       resp =
         PostView
         |> JSONAPI.Serializer.serialize(conn.assigns[:data], conn)
-        |> Poison.encode!
+        |> Poison.encode!()
 
       Plug.Conn.send_resp(conn, 200, resp)
     end
@@ -45,15 +45,18 @@ defmodule JSONAPITest do
     conn =
       :get
       |> conn("/posts")
-      |> Plug.Conn.assign(:data, [%{
-        id: 1,
-        text: "Hello",
-        body: "Hi",
-        author: %{username: "jason", id: 2},
-        other_user: %{username: "josh", id: 3}}])
+      |> Plug.Conn.assign(:data, [
+        %{
+          id: 1,
+          text: "Hello",
+          body: "Hi",
+          author: %{username: "jason", id: 2},
+          other_user: %{username: "josh", id: 3}
+        }
+      ])
       |> MyPostPlug.call([])
 
-    json = conn.resp_body |> Poison.decode!
+    json = conn.resp_body |> Poison.decode!()
 
     assert Map.has_key?(json, "data")
     data_list = Map.get(json, "data")
@@ -84,17 +87,21 @@ defmodule JSONAPITest do
   end
 
   test "handles includes properly" do
-    conn = conn(:get, "/posts?include=author")
-    |> Plug.Conn.assign(:data, [%{
-      id: 1,
-      text: "Hello",
-      body: "Hi",
-      author: %{username: "jason", id: 2},
-      other_user: %{username: "josh", id: 3}}])
-    |> Plug.Conn.fetch_query_params()
-    |> MyPostPlug.call([])
+    conn =
+      conn(:get, "/posts?include=author")
+      |> Plug.Conn.assign(:data, [
+        %{
+          id: 1,
+          text: "Hello",
+          body: "Hi",
+          author: %{username: "jason", id: 2},
+          other_user: %{username: "josh", id: 3}
+        }
+      ])
+      |> Plug.Conn.fetch_query_params()
+      |> MyPostPlug.call([])
 
-    json = conn.resp_body |> Poison.decode!
+    json = conn.resp_body |> Poison.decode!()
 
     assert Map.has_key?(json, "data")
     data_list = Map.get(json, "data")
